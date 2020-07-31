@@ -6,11 +6,16 @@
         v-on:submit="submitForm($event)"
         :id="testForm.id"
         :fields="testForm.fields"
+        @change="valuesChanged($event)"
       />
-      <button type="submit" :form="testForm.id">Submit</button>
+      <button type="submit" :disabled="!formIsValid" :form="testForm.id">Submit</button>
     </div>
 
     <div class="shortened-urls">
+      <span v-if="statusCode === 0">
+        <h3 class="error">Cannot establish a connection to the server. Try again.</h3>
+      </span>
+
       <span v-if="shortenedURL.original">
         <h3>Your URL has been shortened to:</h3>
         <a :href="shortenedURL.original" target="_blank">{{
@@ -40,6 +45,10 @@ interface Response {
   shortened: string;
 }
 
+interface FormValue {
+  url: string;
+}
+
 @Component
 export default class ShortenURL extends Vue {
   @Prop() private msg!: string;
@@ -48,6 +57,8 @@ export default class ShortenURL extends Vue {
     original: "",
     shortened: "",
   };
+  private statusCode = 200;
+  private formIsValid = false;
 
   testForm = {
     id: "test-form",
@@ -55,16 +66,17 @@ export default class ShortenURL extends Vue {
       new FormField({
         type: "text",
         name: "url",
-        placeholder: "URL",
+        placeholder: "URL"
       }),
     ],
   };
 
-  onCancel() {
-    console.log("cancelled");
+  valuesChanged(e: FormValue) {
+    // console.log('changed', e);
+    e.url ? this.formIsValid = true : this.formIsValid = false;
   }
 
-  private async submitForm(e: Event) {
+  private async submitForm(e: FormValue) {
     try {
       const response = await Axios({
         method: "post",
@@ -76,7 +88,12 @@ export default class ShortenURL extends Vue {
       this.shortenedURL = response.data;
       this.fetchUrls();
     } catch (error) {
-      console.log("error", error.response);
+      if (!error.response) {
+        console.log('Network error', error);
+        this.statusCode = 0;
+      } else {
+        console.log("error", error.response);
+      }
     }
   }
 
@@ -90,7 +107,12 @@ export default class ShortenURL extends Vue {
       console.log("data", response.data);
       this.urls = [...response.data];
     } catch (error) {
-      console.log("error", error.response);
+      if (!error.response) {
+        console.log('Network error', error);
+        this.statusCode = 0;
+      } else {
+        console.log("error", error.response);
+      }
     }
   }
 }
@@ -98,72 +120,8 @@ export default class ShortenURL extends Vue {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.form-label {
-  display: inline-block;
-  margin-bottom: 0.5rem;
-  order: 1;
-}
-
-.form-hint {
-  font-size: 12px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-.form-group > div {
-  order: 2;
-}
-.form-group--error .form-label {
-  color: #dc3545;
-}
-.form-group--error .form-control {
-  border-color: #dc3545;
-  background-color: #fae3e5;
-}
-.form-group .error {
-  font-size: 11px;
-  color: #dc3545;
-}
-
-.form-control {
-  display: block;
-  order: 2;
-  width: 100%;
-  background-color: #fff;
-  color: #495057;
-  padding: 0.375rem 0.75rem;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  font-size: 1rem;
-  font-weight: 400;
-  border: 1px solid #e9ecef;
-  border-radius: 0.25rem;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-}
-.form-control:not(textarea) {
-  height: calc(1.5em + 0.75rem + 2px);
-}
-.form-control::placeholder {
-  color: #e9ecef;
-  opacity: 1;
-}
-.form-control:disabled,
-.form-control[readonly] {
-  background-color: #e9ecef;
-  opacity: 1;
-}
-.form-control:focus {
-  color: #495057;
-  background-color: #fff;
-  border-color: #d0dfef;
-  outline: 0;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075),
-    inset 0 1px 1px rgba(0, 0, 0, 0.075);
+.error {
+  color: rgb(170, 21, 21);
 }
 
 .shorten {
