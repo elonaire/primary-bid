@@ -19,6 +19,12 @@ const routes: Array<RouteConfig> = [
     component: () =>
       import(/* webpackChunkName: "about" */ '../views/About.vue'),
   },
+  {
+    path: '/shorten',
+    name: 'Shorten',
+    component: () =>
+      import('../views/Shorten.vue'),
+  }
 ];
 
 const router = new VueRouter({

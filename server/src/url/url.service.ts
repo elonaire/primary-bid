@@ -21,6 +21,8 @@ export class UrlService {
     let res: Response;
     try {
         res = await urlBody.save();
+        console.log(res);
+        
         return res;
     } catch (error) {
         return error;
