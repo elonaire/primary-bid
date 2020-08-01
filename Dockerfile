@@ -3,7 +3,7 @@
 # First Stage : to install and build dependences
 
 # Build client app
-FROM node:10 AS builder
+FROM node:12 AS builder
 WORKDIR /app/client
 COPY ./client/package.json ./
 RUN yarn
@@ -11,7 +11,7 @@ COPY . .
 RUN yarn build
 
 # Build server app
-FROM node:10 AS builder_server
+FROM node:12 AS builder_server
 WORKDIR /app/server
 COPY ./server/package.json ./
 RUN yarn
@@ -33,7 +33,7 @@ COPY --from=builder /app/client/dist /app
 COPY ./client/nginx.conf /etc/nginx/nginx.conf
 
 # Second Stage : Setup command to run server app using lightweight node image
-FROM node:10-alpine
+FROM node:12-alpine
 WORKDIR /app/server
 COPY --from=builder_server /app/server ./
 EXPOSE 3000
