@@ -6,18 +6,9 @@
 FROM node:12 AS builder
 RUN yarn global add @vue/cli
 WORKDIR /app/client
-COPY ./client/package.json ./
+COPY ./package.json ./
 RUN yarn
-COPY ./client .
-RUN yarn build
-
-# Build server app
-FROM node:12 AS builder_server
-RUN yarn global add @nestjs/cli
-WORKDIR /app/server
-COPY ./server/package.json ./
-RUN yarn
-COPY ./server .
+COPY . .
 RUN yarn build
 
 
@@ -31,12 +22,6 @@ RUN yarn build
 
 FROM nginx as production-stage
 RUN mkdir /app
-COPY --from=builder /app/client/dist /app
-COPY ./client/nginx.conf /etc/nginx/nginx.conf
-
-# Second Stage : Setup command to run server app using lightweight node image
-FROM node:12-alpine
-WORKDIR /app/server
-COPY --from=builder_server /app/server ./
-EXPOSE 3000
-CMD ["yarn", "start:prod"]
+COPY --from=builder /app/client/dist/ /app
+COPY ./nginx.conf /etc/nginx/nginx.conf
+# CMD ["systemctl", "restart", "nginx"]
