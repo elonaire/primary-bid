@@ -1,22 +1,40 @@
-FROM node:lts-alpine
+# Using Node:10 Image Since it contains all 
+# the necessary build tools required for dependencies with native build (node-gyp, python, gcc, g++, make)
+# First Stage : to install and build dependences
 
-# install simple http server for serving static content
-RUN npm install -g http-server
-
-# make the 'app' folder the current working directory
-WORKDIR /app
-
-# copy both 'package.json' and 'package-lock.json' (if available)
-COPY package*.json ./
-
-# install project dependencies
-RUN npm install
-
-# copy project files and folders to the current working directory (i.e. 'app' folder)
+# Build client app
+FROM node:10 AS builder
+WORKDIR /app/client
+COPY ./client/package.json ./
+RUN yarn
 COPY . .
+RUN yarn build
 
-# build app for production with minification
-RUN npm run build
+# Build server app
+FROM node:10 AS builder_server
+WORKDIR /app/server
+COPY ./server/package.json ./
+RUN yarn
+COPY . .
+RUN yarn build
 
-EXPOSE 8080
-CMD [ "http-server", "dist" ]
+
+# Second Stage : Setup command to run client app using lightweight node image
+# FROM node:10-alpine
+# WORKDIR /app/client
+# RUN npm i -g serve
+# COPY --from=builder /app/client ./
+# EXPOSE 3006
+# CMD ["serve", "-s", "dist"]
+
+FROM nginx as production-stage
+RUN mkdir /app
+COPY --from=builder /app/client/dist /app
+COPY ./client/nginx.conf /etc/nginx/nginx.conf
+
+# Second Stage : Setup command to run server app using lightweight node image
+FROM node:10-alpine
+WORKDIR /app/server
+COPY --from=builder_server /app/server ./
+EXPOSE 3000
+CMD ["yarn", "start:prod"]
