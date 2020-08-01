@@ -4,6 +4,7 @@
 
 # Build client app
 FROM node:12 AS builder
+RUN yarn global add @vue/cli
 WORKDIR /app/client
 COPY ./client/package.json ./
 RUN yarn
@@ -12,6 +13,7 @@ RUN yarn build
 
 # Build server app
 FROM node:12 AS builder_server
+RUN yarn global add @nestjs/cli
 WORKDIR /app/server
 COPY ./server/package.json ./
 RUN yarn
